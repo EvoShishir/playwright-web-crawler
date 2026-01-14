@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #1e1e21;
+  --foreground: #fafafa;
+  --card: #2a2a2e;
+  --card-foreground: #fafafa;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-glow: rgba(99, 102, 241, 0.4);
+  --secondary: #2f2f33;
+  --secondary-hover: #3a3a3f;
+  --muted: #71717a;
+  --border: rgba(255, 255, 255, 0.12);
+  --ring: rgba(99, 102, 241, 0.5);
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
 }
 
 @theme inline {
@@ -12,15 +25,166 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #1e1e21;
+}
+
+html.light {
+  background: #f8fafc;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #1e1e21;
+  color: #fafafa;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html.light body {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Dark gradient background */
+.gradient-bg-dark {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(168, 85, 247, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(59, 130, 246, 0.06), transparent),
+    #1e1e21;
+}
+
+/* Light gradient background */
+.gradient-bg-light {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(168, 85, 247, 0.05), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(59, 130, 246, 0.04), transparent),
+    #f8fafc;
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow:
+    0 0 20px var(--primary-glow),
+    0 0 40px rgba(99, 102, 241, 0.2);
+}
+
+.glow-primary-subtle {
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.12);
+}
+
+.glow-primary-subtle-light {
+  box-shadow:
+    0 4px 20px rgba(99, 102, 241, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Input focus ring */
+.input-focus-ring:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Smooth scrollbar - Dark */
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Smooth scrollbar - Light */
+.custom-scrollbar-light::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Pulse animation for active indicator */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.pulse-indicator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Log entry animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.log-entry {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: rotate(15deg);
 }
