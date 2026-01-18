@@ -27,7 +27,7 @@ export function LogEntry({ log, index, currentUrl, isDark }: LogEntryProps) {
 
   return (
     <div
-      className={`group log-entry py-2 px-3 rounded-lg flex items-start gap-3 transition-colors relative ${
+      className={`group log-entry py-2 px-3 rounded-lg flex items-center gap-3 transition-colors relative ${
         isCurrentLog
           ? isDark
             ? "bg-indigo-500/10 border border-indigo-500/20"
@@ -37,7 +37,7 @@ export function LogEntry({ log, index, currentUrl, isDark }: LogEntryProps) {
           : "hover:bg-white"
       }`}
     >
-      <span className={`flex-1 py-1.5 ${getLogStyle(log, isDark)}`}>
+      <span className={`flex-1 ${getLogStyle(log, isDark)}`}>
         {parseLogMessage(log).map((part, partIndex) => {
           const urlPattern = /(https?:\/\/[^\s]+)/g;
           if (typeof part === "string" && part.match(urlPattern)) {
