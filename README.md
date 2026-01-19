@@ -1,14 +1,15 @@
-# Playwright Web Crawler
+# PageMedic
 
 A modern, real-time web crawler built with Next.js and Playwright that crawls websites, detects broken links and images, and streams results live to your browser.
 
-![Crawler Screenshot](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![PageMedic](https://img.shields.io/badge/PageMedic-v1.0-indigo?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
 ![Playwright](https://img.shields.io/badge/Playwright-Latest-green?style=flat-square)
 
 ## Overview
 
-This application provides a powerful interface for crawling websites using Playwright's Chromium browser. It detects broken links (404s) and broken images, tracks where issues originate, and displays all events in real-time—making it perfect for website auditing, SEO analysis, and quality assurance.
+**PageMedic** is a powerful web health checker that uses Playwright's Chromium browser to diagnose your website. It detects broken links (404s) and broken images, tracks where issues originate, and displays all events in real-time—making it perfect for website auditing, SEO analysis, and quality assurance.
 
 ## Features
 
@@ -106,7 +107,7 @@ pnpm exec playwright install chromium
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser to launch PageMedic.
 
 ### Production
 
@@ -115,7 +116,7 @@ pnpm build
 pnpm start
 ```
 
-### Using the Crawler
+### Using PageMedic
 
 1. **Enter Start URL** (required)
    - Example: `https://example.com`
@@ -157,7 +158,7 @@ Each broken image shows:
 
 | Emoji | Meaning |
 |-------|---------|
-| 🚀 | Crawler starting |
+| 🚀 | PageMedic starting |
 | 📄 | Loading sitemap |
 | ✅ | Success/completion |
 | 🔍 | Currently crawling |
@@ -187,7 +188,7 @@ Each broken image shows:
 - **Link registry** for referrer tracking
 
 ### Data Flow
-1. User submits start URL → API creates SSE stream
+1. User submits start URL → PageMedic API creates SSE stream
 2. Playwright launches headless Chromium
 3. Each page visited → Extract links, register sources
 4. Broken resources → Look up referrer, send to client
@@ -204,7 +205,7 @@ In `app/api/crawl/route.ts`:
 
 ### Skip Lists
 
-Social media domains that are skipped for external link checking:
+Social media domains that PageMedic skips for external link checking:
 - Twitter/X, LinkedIn, Facebook, Instagram
 - YouTube, TikTok, Pinterest, Reddit
 - Discord, WhatsApp, Telegram, Medium
@@ -233,7 +234,7 @@ Social media domains that are skipped for external link checking:
 app/
 ├── api/
 │   └── crawl/
-│       └── route.ts          # Crawler API endpoint
+│       └── route.ts          # PageMedic crawler API endpoint
 ├── components/
 │   ├── ActivityLog.tsx       # Log viewer component
 │   ├── BrokenLinksPanel.tsx  # Broken links display
@@ -252,7 +253,7 @@ app/
 ├── utils/
 │   ├── logParser.ts          # Log message parsing
 │   └── logStyles.ts          # Log styling utilities
-├── page.tsx                  # Main page component
+├── page.tsx                  # Main PageMedic component
 ├── layout.tsx                # Root layout
 └── globals.css               # Global styles
 ```
@@ -281,14 +282,18 @@ app/
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions to PageMedic are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - feel free to use this project for personal or commercial purposes.
+MIT License - feel free to use PageMedic for personal or commercial purposes.
 
 ## Support
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Playwright Documentation](https://playwright.dev)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
+
+---
+
+**PageMedic** - Diagnose your website's health in real-time 🩺
