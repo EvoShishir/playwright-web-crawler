@@ -1,235 +1,294 @@
 # Playwright Web Crawler
 
-A modern, real-time web crawler built with Next.js and Playwright that allows you to crawl websites with live log streaming directly to your browser.
+A modern, real-time web crawler built with Next.js and Playwright that crawls websites, detects broken links and images, and streams results live to your browser.
+
+![Crawler Screenshot](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Playwright](https://img.shields.io/badge/Playwright-Latest-green?style=flat-square)
 
 ## Overview
 
-This application provides a user-friendly interface for crawling websites using Playwright's Chromium browser. It captures and displays all navigation events, errors, and console messages in real-time, making it perfect for website auditing, link checking, and error detection.
+This application provides a powerful interface for crawling websites using Playwright's Chromium browser. It detects broken links (404s) and broken images, tracks where issues originate, and displays all events in real-time—making it perfect for website auditing, SEO analysis, and quality assurance.
 
 ## Features
 
-### Core Functionality
-- **Real-time Log Streaming**: Watch crawl progress live as logs stream to your browser using Server-Sent Events (SSE)
-- **Sitemap Support**: Optionally provide a sitemap URL to include additional pages in the crawl queue
-- **Smart Auto-scroll**: Logs auto-scroll when you're at the bottom, but won't interrupt when you scroll up to review
-- **Clickable URLs**: All URLs in logs are clickable links that open in new tabs
-- **Visual Feedback**: Animated spinner appears next to the currently crawling URL
-- **Error Tracking**: Captures and logs:
-  - Failed network requests
-  - JavaScript console errors
-  - Page navigation errors
-  - Runtime exceptions
+### 🔗 Broken Link Detection
+- **404 Detection**: Automatically finds broken internal links
+- **Source Page Tracking**: Shows exactly which page contains the broken link
+- **Link Text & Context**: Displays the anchor text and HTML element location (nav, footer, etc.)
+- **Referrer Tracking**: When a page returns 404, see all pages that link to it
 
-### User Experience
-- **Stop/Resume Control**: Stop crawling at any time with the Stop button
-- **Input Validation**: Clear indication of required fields and URL format
-- **Responsive UI**: Clean, dark-themed interface built with Tailwind CSS
-- **Progress Tracking**: See total pages crawled and queue status in real-time
+### 🖼️ Broken Image Detection
+- **Failed Image Detection**: Finds images that fail to load
+- **Alt Text Display**: Shows the image's alt attribute for identification
+- **Element Context**: Shows which section of the page contains the broken image
+- **Failure Reason**: Displays why the image failed (HTTP 404, zero width, incomplete load)
 
-## How It Works
+### 📊 Real-time Dashboard
+- **Tabbed Interface**: Switch between Activity Log, Broken Links, and Broken Images
+- **Live Statistics**: Track pages crawled, broken links, broken images, errors, and warnings
+- **Expandable Details**: Click on any broken link/image to see full details
+- **Copy URLs**: One-click copy for broken URLs
+- **Clickable Source Pages**: Jump directly to the page containing the issue
 
-### Architecture
+### 🎨 User Experience
+- **Light/Dark Theme**: Toggle between themes with smooth transitions
+- **Scroll to Bottom Button**: Appears when scrolled up in the activity log
+- **Auto-scroll**: Logs auto-scroll when at bottom, pause when reviewing
+- **Live Indicator**: Pulsing indicator shows when crawling is active
+- **Responsive Design**: Works on desktop and tablet screens
 
-1. **Frontend (app/page.tsx:1)**
-   - React client component with real-time state management
-   - EventSource connection for receiving Server-Sent Events
-   - Smart scroll detection to maintain user's reading position
-   - URL parsing to convert log messages into clickable links
+### ⚙️ Smart Crawling
+- **Sitemap Support**: Import URLs from sitemap.xml
+- **SSL Certificate Handling**: Works with self-signed certificates
+- **Origin Isolation**: Only crawls same-domain links
+- **Batch Processing**: Crawls in batches of 100 for efficiency
+- **Resource Type Detection**: Distinguishes between pages, images, and documents
 
-2. **Backend API (app/api/crawl/route.ts:1)**
-   - Next.js API route with streaming response
-   - Playwright Chromium browser automation
-   - Breadth-first crawl algorithm
-   - Origin-based link filtering (only crawls same-domain links)
+### 🛡️ False Positive Prevention
+- **Social Media Skip List**: Doesn't flag Twitter, LinkedIn, Facebook, etc. (they block bots)
+- **CORS Error Filtering**: Ignores cross-origin resource errors
+- **ERR_ABORTED Filtering**: Ignores navigation cancellation errors
+- **PDF/Document Handling**: Checks documents via HEAD request instead of navigation
 
-### Crawl Process
+## Screenshots
 
-1. User enters start URL and optional sitemap URL
-2. API initializes Playwright browser in headless mode
-3. If sitemap provided, fetches and parses XML to extract URLs
-4. Crawl queue starts with all discovered URLs
-5. For each page:
-   - Navigate and wait for network idle
-   - Extract all same-origin links
-   - Add new links to queue
-   - Log all events to client
-6. Crawls in batches of 100 URLs with safety limit of 1000 pages
-7. Streams completion status when done
+### Activity Log
+Real-time crawling progress with live updates:
+- 🔍 Currently crawling URL with spinner
+- ✅ Successful operations
+- ❌ Errors and broken resources
+- 📊 Queue and batch status
 
-### Error Detection
+### Broken Links Panel
+Expandable cards showing:
+- Status code (404, 500, etc.)
+- Broken URL
+- **Source page** (where to fix it)
+- Link text and element location
 
-The crawler monitors three types of errors:
-
-- **Request Failures**: Network requests that fail (timeouts, 404s, etc.)
-- **Console Errors**: JavaScript errors logged to browser console
-- **Page Errors**: Uncaught exceptions and runtime errors
-
-All errors are logged with the page URL where they occurred.
+### Broken Images Panel
+Detailed breakdown of:
+- Image source URL
+- Page containing the broken image
+- Alt text and failure reason
+- Element context
 
 ## Installation
 
 ### Prerequisites
-- Node.js 18+ or compatible runtime
-- pnpm, npm, yarn, or bun package manager
+- Node.js 18+ 
+- pnpm, npm, yarn, or bun
 
 ### Setup
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd playwright-crawler-next
+git clone https://github.com/EvoShishir/playwright-web-crawler.git
+cd playwright-web-crawler
 ```
 
 2. Install dependencies:
 ```bash
 pnpm install
-# or
-npm install
-# or
-yarn install
 ```
 
 3. Install Playwright browsers:
 ```bash
 pnpm exec playwright install chromium
-# or
-npx playwright install chromium
 ```
 
 ## Usage
 
 ### Development
 
-Start the development server:
-
 ```bash
 pnpm dev
-# or
-npm run dev
-# or
-yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Production
+
+```bash
+pnpm build
+pnpm start
+```
+
 ### Using the Crawler
 
 1. **Enter Start URL** (required)
-   - Must be a valid HTTP/HTTPS URL
    - Example: `https://example.com`
 
 2. **Enter Sitemap URL** (optional)
-   - URL to your sitemap.xml file
    - Example: `https://example.com/sitemap.xml`
-   - All same-origin URLs from sitemap will be added to crawl queue
 
 3. **Click "Start Crawl"**
-   - Watch real-time logs appear in the console below
-   - Blue spinner shows current page being crawled
-   - All URLs are clickable for quick access
+   - Watch real-time logs in the Activity Log tab
+   - Switch to Broken Links or Broken Images tabs to see issues
 
-4. **Monitor Progress**
-   - Logs show crawl count, URLs, and any errors
-   - Auto-scrolls when at bottom of log viewer
-   - Scroll up to review previous logs without interruption
+4. **Review Issues**
+   - Click on any broken link/image card to expand details
+   - "FIX HERE" label shows which page to edit
+   - Click source page link to visit it directly
 
 5. **Stop Anytime**
-   - Click "Stop" button to halt crawling
-   - Browser will close gracefully
-   - Final stats displayed in logs
+   - Click "Stop" to halt crawling gracefully
 
-### Reading the Logs
+### Understanding the Results
 
-Log messages include:
-- `🚀 Starting crawler...` - Initialization
-- `📄 Loading sitemap:` - Sitemap fetch attempt
-- `✅ Added X URLs from sitemap` - Sitemap success
-- `🔍 Crawling (N): <URL>` - Currently crawling page N
-- `🚫 Internal request failed:` - Network request failure
-- `❌ Console error:` - JavaScript console error
-- `🔥 JS error:` - Page runtime error
-- `⚠️ Navigation error:` - Page load failure
-- `✅ Batch finished. Total pages crawled: N` - Batch completion
-- `🏁 Crawl complete. Pages visited: N` - Final completion
+#### Broken Links Panel
+Each broken link shows:
+- **Status Code**: HTTP error code (404, 500, etc.)
+- **Broken URL**: The URL that returned an error
+- **Source Page**: The page containing the link (where you need to fix it!)
+- **Link Text**: The anchor text of the broken link
+- **Element Location**: HTML context like `<nav>`, `<footer.links>`, etc.
 
-## Benefits
+#### Broken Images Panel
+Each broken image shows:
+- **Image Source**: The src URL that failed
+- **Page**: Where the image appears
+- **Alt Text**: The image's alt attribute
+- **Reason**: Why it failed (404, zero width, etc.)
+- **Element Location**: HTML context
 
-### For Developers
-- **Fast Setup**: No complex configuration required
-- **Modern Stack**: Built with latest Next.js, React, and TypeScript
-- **Type Safety**: Full TypeScript support for reliability
-- **Live Debugging**: See errors as they happen during crawl
-- **Easy Extension**: Clean code structure for adding features
+### Log Message Reference
 
-### For Website Auditing
-- **Comprehensive Coverage**: Crawls all internal links automatically
-- **Error Discovery**: Find broken links, JS errors, and failed requests
-- **Sitemap Validation**: Test if sitemap URLs are accessible
-- **Real-time Monitoring**: No waiting for results, see issues immediately
-- **Link Verification**: Ensure all internal navigation works
+| Emoji | Meaning |
+|-------|---------|
+| 🚀 | Crawler starting |
+| 📄 | Loading sitemap |
+| ✅ | Success/completion |
+| 🔍 | Currently crawling |
+| 🔗 | Link information |
+| 🖼️ | Image information |
+| 🔗❌ | Broken link detected |
+| 🖼️❌ | Broken image detected |
+| 🚫 | Request failed |
+| ❌ | Console error |
+| 🔥 | JavaScript error |
+| ⚠️ | Warning/navigation error |
+| 📊 | Queue status |
+| 🏁 | Crawl complete |
 
-### For Testing
-- **Integration Testing**: Verify entire site navigation flows
-- **Error Detection**: Catch console errors across all pages
-- **Performance Monitoring**: Track slow page loads (30s timeout)
-- **Scale Testing**: Test sites with up to 1000 pages
+## Architecture
 
-### Technical Advantages
-- **Non-blocking Architecture**: Server-Sent Events allow crawling without blocking
-- **Headless Browser**: Uses real Chromium for accurate JavaScript execution
-- **Smart Queuing**: Avoids duplicate crawls with visited set
-- **Origin Isolation**: Stays within your domain, won't crawl external sites
-- **Resource Efficient**: Batch processing prevents memory issues
+### Frontend
+- **React 19** with hooks for state management
+- **Server-Sent Events (SSE)** for real-time streaming
+- **Tailwind CSS** for styling
+- **Component-based** architecture with TypeScript
 
-## Technical Stack
+### Backend
+- **Next.js 16** App Router API routes
+- **Playwright** for browser automation
+- **Streaming responses** via SSE
+- **Link registry** for referrer tracking
 
-- **Framework**: [Next.js 16](https://nextjs.org) with App Router
-- **Language**: [TypeScript](https://www.typescriptlang.org)
-- **Browser Automation**: [Playwright](https://playwright.dev)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com)
-- **Real-time Communication**: Server-Sent Events (SSE)
-- **Package Manager**: pnpm (npm/yarn/bun compatible)
+### Data Flow
+1. User submits start URL → API creates SSE stream
+2. Playwright launches headless Chromium
+3. Each page visited → Extract links, register sources
+4. Broken resources → Look up referrer, send to client
+5. Client receives events → Updates UI in real-time
 
 ## Configuration
 
 ### Adjustable Parameters
 
-In `app/api/crawl/route.ts:75-76`:
-- `BATCH_SIZE`: Number of URLs per batch (default: 100)
-- `MAX_PAGES`: Safety limit for total pages (default: 1000)
+In `app/api/crawl/route.ts`:
+- `BATCH_SIZE`: URLs per batch (default: 100)
+- `MAX_PAGES`: Maximum pages to crawl (default: 1000)
+- `timeout`: Navigation timeout (default: 30000ms)
 
-In `app/api/crawl/route.ts:145`:
-- `timeout`: Navigation timeout per page (default: 30000ms)
+### Skip Lists
+
+Social media domains that are skipped for external link checking:
+- Twitter/X, LinkedIn, Facebook, Instagram
+- YouTube, TikTok, Pinterest, Reddit
+- Discord, WhatsApp, Telegram, Medium
+- Apple App Store, Google Play Store
+
+### Ignored Error Patterns
+- CORS policy errors
+- `net::ERR_ABORTED`
+- `net::ERR_BLOCKED`
+- Mixed content warnings
+- Security errors
+
+## Technical Stack
+
+| Technology | Purpose |
+|------------|---------|
+| [Next.js 16](https://nextjs.org) | React framework with App Router |
+| [TypeScript](https://www.typescriptlang.org) | Type-safe JavaScript |
+| [Playwright](https://playwright.dev) | Browser automation |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling |
+| Server-Sent Events | Real-time streaming |
+
+## Project Structure
+
+```
+app/
+├── api/
+│   └── crawl/
+│       └── route.ts          # Crawler API endpoint
+├── components/
+│   ├── ActivityLog.tsx       # Log viewer component
+│   ├── BrokenLinksPanel.tsx  # Broken links display
+│   ├── BrokenImagesPanel.tsx # Broken images display
+│   ├── ContentPanel.tsx      # Tabbed content area
+│   ├── ConfigCard.tsx        # URL input & stats
+│   ├── StatsGrid.tsx         # Statistics cards
+│   └── ...
+├── hooks/
+│   ├── useCrawler.ts         # Crawler state management
+│   ├── useStats.ts           # Statistics calculation
+│   ├── useTheme.ts           # Theme management
+│   └── useAutoScroll.ts      # Scroll behavior
+├── types/
+│   └── crawler.ts            # TypeScript interfaces
+├── utils/
+│   ├── logParser.ts          # Log message parsing
+│   └── logStyles.ts          # Log styling utilities
+├── page.tsx                  # Main page component
+├── layout.tsx                # Root layout
+└── globals.css               # Global styles
+```
 
 ## Limitations
 
-- Crawls only same-origin links (doesn't follow external domains)
+- Crawls only same-origin links (internal links)
 - Maximum 1000 pages per crawl (configurable)
-- 30-second timeout per page navigation
-- Headless mode only (no browser UI visible)
+- 30-second timeout per page
+- Headless mode only
 - No authentication support (public pages only)
+- External links to social media are not verified
 
 ## Future Enhancements
 
-Potential improvements:
-- Export crawl results to CSV/JSON
-- Custom error filtering and categorization
-- Crawl depth limiting
-- Rate limiting controls
-- Authentication support (login flows)
-- Screenshot capture on errors
-- Performance metrics (Core Web Vitals)
-- Parallel browser instances for faster crawling
-- Pause/resume functionality
-- Historical crawl comparison
+- [ ] Export results to CSV/JSON
+- [ ] Crawl depth limiting
+- [ ] Authentication support (login flows)
+- [ ] Screenshot capture on errors
+- [ ] Performance metrics (Core Web Vitals)
+- [ ] Parallel browser instances
+- [ ] Pause/resume functionality
+- [ ] Historical crawl comparison
+- [ ] Custom ignore patterns
+- [ ] Webhook notifications
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is built with Next.js and is subject to its license terms.
+MIT License - feel free to use this project for personal or commercial purposes.
 
 ## Support
 
-For issues or questions, please refer to:
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Playwright Documentation](https://playwright.dev)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
