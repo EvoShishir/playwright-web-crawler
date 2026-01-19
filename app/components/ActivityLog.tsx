@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { LogEntry } from "./LogEntry";
 import { EmptyState } from "./EmptyState";
 
@@ -18,9 +19,32 @@ export function ActivityLog({
   containerRef,
   onScroll,
 }: ActivityLogProps) {
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    onScroll();
+    
+    if (containerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      // Show button if scrolled more than 100px from bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    }
+  }, [onScroll, containerRef]);
+
+  const scrollToBottom = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+      setShowScrollButton(false);
+    }
+  }, [containerRef]);
+
   return (
     <section
-      className={`md:col-span-2 rounded-2xl overflow-hidden border ${
+      className={`md:col-span-2 rounded-2xl overflow-hidden border relative ${
         isDark
           ? "bg-zinc-800/80 border-zinc-600/80"
           : "bg-white/80 border-slate-200"
@@ -85,8 +109,8 @@ export function ActivityLog({
 
       <div
         ref={containerRef}
-        onScroll={onScroll}
-        className={`h-[calc(100vh-262px)] overflow-y-auto ${
+        onScroll={handleScroll}
+        className={`h-[calc(100vh-200px)] overflow-y-auto ${
           isDark
             ? "custom-scrollbar-dark bg-zinc-900"
             : "custom-scrollbar-light bg-slate-50"
@@ -108,6 +132,32 @@ export function ActivityLog({
           </div>
         )}
       </div>
+
+      {/* Scroll to bottom button */}
+      {showScrollButton && logs.length > 0 && (
+        <button
+          onClick={scrollToBottom}
+          className={`absolute bottom-4 right-6 flex items-center gap-2 p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 ${
+            isDark
+              ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/25"
+              : "bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/30"
+          }`}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+            />
+          </svg>
+        </button>
+      )}
     </section>
   );
 }

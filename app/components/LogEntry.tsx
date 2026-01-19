@@ -83,7 +83,7 @@ export function LogEntry({ log, index, currentUrl, isDark }: LogEntryProps) {
             />
           </svg>
         )}
-        <button
+        {!isCurrentLog && (<button
           onClick={handleCopy}
           className={`opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md ${
             isDark
@@ -122,7 +122,7 @@ export function LogEntry({ log, index, currentUrl, isDark }: LogEntryProps) {
               />
             </svg>
           )}
-        </button>
+        </button>)}
       </div>
     </div>
   );

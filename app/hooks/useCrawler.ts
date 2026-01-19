@@ -1,14 +1,11 @@
 import { useState, useCallback } from "react";
 import { extractCrawlingUrl } from "../utils/logParser";
-
-interface CrawlerEventData {
-  type: "log" | "prompt" | "done" | "error";
-  message?: string;
-  sessionId?: string;
-}
+import { BrokenLink, BrokenImage, CrawlerEventData } from "../types/crawler";
 
 export function useCrawler() {
   const [logs, setLogs] = useState<string[]>([]);
+  const [brokenLinks, setBrokenLinks] = useState<BrokenLink[]>([]);
+  const [brokenImages, setBrokenImages] = useState<BrokenImage[]>([]);
   const [isCrawling, setIsCrawling] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
@@ -21,6 +18,8 @@ export function useCrawler() {
       }
 
       setLogs([]);
+      setBrokenLinks([]);
+      setBrokenImages([]);
       setIsCrawling(true);
       onResetAutoScroll?.();
 
@@ -39,6 +38,16 @@ export function useCrawler() {
           const url = extractCrawlingUrl(data.message!);
           if (url) {
             setCurrentUrl(url);
+          }
+        } else if (data.type === "broken_link") {
+          setLogs((prev) => [...prev, data.message!]);
+          if (data.data) {
+            setBrokenLinks((prev) => [...prev, data.data as BrokenLink]);
+          }
+        } else if (data.type === "broken_image") {
+          setLogs((prev) => [...prev, data.message!]);
+          if (data.data) {
+            setBrokenImages((prev) => [...prev, data.data as BrokenImage]);
           }
         } else if (data.type === "prompt") {
           const shouldContinue = window.confirm(data.message!);
@@ -90,6 +99,8 @@ export function useCrawler() {
 
   return {
     logs,
+    brokenLinks,
+    brokenImages,
     isCrawling,
     currentUrl,
     handleStartCrawl,

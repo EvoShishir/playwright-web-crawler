@@ -5,15 +5,15 @@ import { useCrawler } from "./hooks/useCrawler";
 import { useStats } from "./hooks/useStats";
 import { useAutoScroll } from "./hooks/useAutoScroll";
 import { ConfigCard } from "./components/ConfigCard";
-import { ActivityLog } from "./components/ActivityLog";
+import { ContentPanel } from "./components/ContentPanel";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 
 export default function Home() {
   const { isDark, toggleTheme } = useTheme();
-  const { logs, isCrawling, currentUrl, handleStartCrawl, handleStop } =
+  const { logs, brokenLinks, brokenImages, isCrawling, currentUrl, handleStartCrawl, handleStop } =
     useCrawler();
-  const stats = useStats(logs);
+  const stats = useStats(logs, brokenLinks, brokenImages);
   const { containerRef, handleScroll, resetAutoScroll } = useAutoScroll([logs]);
 
   const handleStart = (startUrl: string, sitemapUrl: string) => {
@@ -29,7 +29,7 @@ export default function Home() {
       }`}
     >
       <Header isDark={isDark} onToggleTheme={toggleTheme} />
-      <main className="p-6 grid md:grid-cols-3 gap-4">
+      <main className="px-6 py-4 grid md:grid-cols-3 gap-4">
         <ConfigCard
           isDark={isDark}
           onToggleTheme={toggleTheme}
@@ -39,8 +39,10 @@ export default function Home() {
           onStop={handleStop}
         />
 
-        <ActivityLog
+        <ContentPanel
           logs={logs}
+          brokenLinks={brokenLinks}
+          brokenImages={brokenImages}
           currentUrl={currentUrl}
           isCrawling={isCrawling}
           isDark={isDark}

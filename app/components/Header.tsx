@@ -8,7 +8,7 @@ interface HeaderProps {
 export function Header({ isDark, onToggleTheme }: HeaderProps) {
   return (
     <div
-      className={`px-6 pt-6 border-slate-200 ${isDark}
+      className={`px-6 pt-4 border-slate-200 ${isDark}
           ? "bg-zinc-800/80  glow-primary-subtle"
           : "bg-white/80  glow-primary-subtle-light"`}
     >
