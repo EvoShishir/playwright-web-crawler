@@ -11,9 +11,9 @@ import { Header } from "./components/Header";
 
 export default function Home() {
   const { isDark, toggleTheme } = useTheme();
-  const { logs, brokenLinks, brokenImages, isCrawling, currentUrl, handleStartCrawl, handleStop } =
+  const { logs, brokenLinks, brokenImages, consoleErrors, isCrawling, currentUrl, handleStartCrawl, handleStop } =
     useCrawler();
-  const stats = useStats(logs, brokenLinks, brokenImages);
+  const stats = useStats(logs, brokenLinks, brokenImages, consoleErrors);
   const { containerRef, handleScroll, resetAutoScroll } = useAutoScroll([logs]);
 
   const handleStart = (startUrl: string, sitemapUrl: string) => {
@@ -43,6 +43,7 @@ export default function Home() {
           logs={logs}
           brokenLinks={brokenLinks}
           brokenImages={brokenImages}
+          consoleErrors={consoleErrors}
           currentUrl={currentUrl}
           isCrawling={isCrawling}
           isDark={isDark}

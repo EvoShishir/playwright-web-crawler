@@ -101,7 +101,7 @@ export function BrokenImagesPanel({ brokenImages, isDark }: BrokenImagesPanelPro
                   isDark ? "text-zinc-100" : "text-slate-800"
                 }`}
               >
-                {image.src.length > 60 ? `...${image.src.slice(-60)}` : image.src}
+                {image.src}
               </div>
               <div
                 className={`text-xs mt-0.5 ${

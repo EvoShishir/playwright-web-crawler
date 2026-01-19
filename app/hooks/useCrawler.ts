@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
 import { extractCrawlingUrl } from "../utils/logParser";
-import { BrokenLink, BrokenImage, CrawlerEventData } from "../types/crawler";
+import { BrokenLink, BrokenImage, ConsoleError, CrawlerEventData } from "../types/crawler";
 
 export function useCrawler() {
   const [logs, setLogs] = useState<string[]>([]);
   const [brokenLinks, setBrokenLinks] = useState<BrokenLink[]>([]);
   const [brokenImages, setBrokenImages] = useState<BrokenImage[]>([]);
+  const [consoleErrors, setConsoleErrors] = useState<ConsoleError[]>([]);
   const [isCrawling, setIsCrawling] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [eventSource, setEventSource] = useState<EventSource | null>(null);
@@ -20,6 +21,7 @@ export function useCrawler() {
       setLogs([]);
       setBrokenLinks([]);
       setBrokenImages([]);
+      setConsoleErrors([]);
       setIsCrawling(true);
       onResetAutoScroll?.();
 
@@ -48,6 +50,10 @@ export function useCrawler() {
           setLogs((prev) => [...prev, data.message!]);
           if (data.data) {
             setBrokenImages((prev) => [...prev, data.data as BrokenImage]);
+          }
+        } else if (data.type === "console_error") {
+          if (data.data) {
+            setConsoleErrors((prev) => [...prev, data.data as ConsoleError]);
           }
         } else if (data.type === "prompt") {
           const shouldContinue = window.confirm(data.message!);
@@ -101,6 +107,7 @@ export function useCrawler() {
     logs,
     brokenLinks,
     brokenImages,
+    consoleErrors,
     isCrawling,
     currentUrl,
     handleStartCrawl,

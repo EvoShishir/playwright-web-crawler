@@ -16,9 +16,16 @@ export interface BrokenImage {
   timestamp: string;
 }
 
+export interface ConsoleError {
+  message: string;
+  foundOnPage: string;
+  type: "error" | "warning" | "js_error";
+  timestamp: string;
+}
+
 export interface CrawlerEventData {
-  type: "log" | "prompt" | "done" | "error" | "broken_link" | "broken_image";
+  type: "log" | "prompt" | "done" | "error" | "broken_link" | "broken_image" | "console_error";
   message?: string;
   sessionId?: string;
-  data?: BrokenLink | BrokenImage;
+  data?: BrokenLink | BrokenImage | ConsoleError;
 }

@@ -5,14 +5,16 @@ import { LogEntry } from "./LogEntry";
 import { EmptyState } from "./EmptyState";
 import { BrokenLinksPanel } from "./BrokenLinksPanel";
 import { BrokenImagesPanel } from "./BrokenImagesPanel";
-import { BrokenLink, BrokenImage } from "../types/crawler";
+import { ConsoleErrorsPanel } from "./ConsoleErrorsPanel";
+import { BrokenLink, BrokenImage, ConsoleError } from "../types/crawler";
 
-type TabType = "logs" | "broken-links" | "broken-images";
+type TabType = "logs" | "broken-links" | "broken-images" | "console-errors";
 
 interface ContentPanelProps {
   logs: string[];
   brokenLinks: BrokenLink[];
   brokenImages: BrokenImage[];
+  consoleErrors: ConsoleError[];
   currentUrl: string | null;
   isCrawling: boolean;
   isDark: boolean;
@@ -24,6 +26,7 @@ export function ContentPanel({
   logs,
   brokenLinks,
   brokenImages,
+  consoleErrors,
   currentUrl,
   isCrawling,
   isDark,
@@ -114,6 +117,26 @@ export function ContentPanel({
         </svg>
       ),
     },
+    {
+      id: "console-errors",
+      label: "Console Errors",
+      count: consoleErrors.length,
+      icon: (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -153,9 +176,13 @@ export function ContentPanel({
                     ? isDark
                       ? "bg-red-500/20 text-red-400"
                       : "bg-red-100 text-red-600"
+                    : tab.id === "broken-images"
+                    ? isDark
+                      ? "bg-orange-500/20 text-orange-400"
+                      : "bg-orange-100 text-orange-600"
                     : isDark
-                    ? "bg-orange-500/20 text-orange-400"
-                    : "bg-orange-100 text-orange-600"
+                    ? "bg-violet-500/20 text-violet-400"
+                    : "bg-violet-100 text-violet-600"
                 }`}
               >
                 {tab.count}
@@ -221,6 +248,10 @@ export function ContentPanel({
 
         {activeTab === "broken-images" && (
           <BrokenImagesPanel brokenImages={brokenImages} isDark={isDark} />
+        )}
+
+        {activeTab === "console-errors" && (
+          <ConsoleErrorsPanel consoleErrors={consoleErrors} isDark={isDark} />
         )}
       </div>
 

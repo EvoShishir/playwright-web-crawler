@@ -2,7 +2,7 @@ import { chromium, Page, Request, Response as PlaywrightResponse } from "playwri
 import { NextRequest } from "next/server";
 import https from "https";
 import http from "http";
-import { BrokenLink, BrokenImage } from "../../types/crawler";
+import { BrokenLink, BrokenImage, ConsoleError } from "../../types/crawler";
 
 // Domains that commonly block automated requests (false positives)
 const SKIP_EXTERNAL_DOMAINS = [
@@ -98,6 +98,29 @@ function isNonHtmlResource(url: string): boolean {
     return NON_HTML_EXTENSIONS.some((ext) => pathname.endsWith(ext));
   } catch {
     return false;
+  }
+}
+
+// Clean URL by removing hash fragments (they're just anchors, not different pages)
+function cleanUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = ""; // Remove hash fragment
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+// Check if URL is just a hash link (e.g., "#section" or "page#section")
+function isHashOnlyOrAnchor(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // If pathname is just "/" or empty and there's a hash, it's an anchor
+    return parsed.hash !== "" && (parsed.pathname === "/" || parsed.pathname === "");
+  } catch {
+    // If it starts with #, it's an anchor
+    return url.startsWith("#");
   }
 }
 
@@ -236,7 +259,7 @@ async function extractLinksWithContext(page: Page): Promise<
 
       return {
         href: anchor.href,
-        text: anchor.textContent?.trim().slice(0, 100) || "[No text]",
+        text: anchor.textContent?.trim() || "[No text]",
         context: `<${parentTag}${parentClass}>`,
       };
     });
@@ -297,34 +320,44 @@ function parse404FromConsoleError(message: string): { url: string; status: numbe
 
 // Determine resource type from URL or content-type
 function getResourceType(url: string, contentType?: string): "link" | "image" | "document" | "other" {
-  const urlLower = url.toLowerCase();
-  
-  // Check by file extension - images
-  if (/\.(jpg|jpeg|png|gif|webp|svg|ico|bmp|tiff?)(\?|$)/i.test(urlLower)) {
-    return "image";
-  }
-  
-  // Check by file extension - documents (PDFs, etc.)
-  if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx)(\?|$)/i.test(urlLower)) {
-    return "document";
-  }
-  
-  // Check by content-type
-  if (contentType) {
-    if (contentType.startsWith("image/")) {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname.toLowerCase();
+    
+    // URLs with hash fragments that don't have file extensions are links
+    if (parsed.hash && !pathname.match(/\.[a-z0-9]{2,5}$/i)) {
+      return "link";
+    }
+    
+    // Check by file extension - images
+    if (/\.(jpg|jpeg|png|gif|webp|svg|ico|bmp|tiff?)$/i.test(pathname)) {
       return "image";
     }
-    if (contentType.includes("pdf") || contentType.includes("document")) {
+    
+    // Check by file extension - documents (PDFs, etc.)
+    if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$/i.test(pathname)) {
       return "document";
     }
+    
+    // Check by content-type
+    if (contentType) {
+      if (contentType.startsWith("image/")) {
+        return "image";
+      }
+      if (contentType.includes("pdf") || contentType.includes("document")) {
+        return "document";
+      }
+    }
+    
+    // Check if it looks like a page (no extension or HTML-like extension)
+    if (/\.(html?|php|aspx?|jsp)$/i.test(pathname) || !pathname.match(/\.[a-z0-9]{2,5}$/i)) {
+      return "link";
+    }
+    
+    return "other";
+  } catch {
+    return "link"; // Default to link if URL parsing fails
   }
-  
-  // Check if it looks like a page/document
-  if (/\.(html?|php|aspx?|jsp)(\?|$)/i.test(urlLower) || !urlLower.match(/\.[a-z0-9]{2,4}(\?|$)/i)) {
-    return "link";
-  }
-  
-  return "other";
 }
 
 export async function GET(request: NextRequest) {
@@ -450,6 +483,11 @@ export async function GET(request: NextRequest) {
           return;
         }
         
+        // Skip SVG images - they can report false errors
+        if (url.toLowerCase().includes(".svg")) {
+          return;
+        }
+        
         checkedResources.add(url);
 
         const contentType = response.headers()["content-type"] || "";
@@ -460,7 +498,8 @@ export async function GET(request: NextRequest) {
           return;
         }
 
-        if (type === "image" || resourceType === "image") {
+        // Only report images with genuine 404/500 errors
+        if ((type === "image" || resourceType === "image") && status >= 400) {
           brokenImagesCount++;
           const brokenImage: BrokenImage = {
             src: url,
@@ -472,7 +511,7 @@ export async function GET(request: NextRequest) {
           };
           sendEvent({
             type: "broken_image",
-            message: `🖼️❌ Broken image (${status}): ${url.slice(0, 80)}...`,
+            message: `🖼️❌ Broken image (${status}): ${url}`,
             data: brokenImage,
           });
         } else if (type === "link" || resourceType === "fetch" || resourceType === "xhr") {
@@ -528,7 +567,9 @@ export async function GET(request: NextRequest) {
         if (shouldIgnoreError(errorText) || 
             errorText.includes("ERR_ABORTED") || 
             errorText.includes("ERR_BLOCKED") ||
-            errorText.includes("ERR_FAILED")) {
+            errorText.includes("ERR_FAILED") ||
+            errorText.includes("ERR_CACHE") ||
+            errorText.includes("ERR_CONNECTION")) {
           return;
         }
         
@@ -542,6 +583,11 @@ export async function GET(request: NextRequest) {
           return;
         }
 
+        // Skip SVG images - they often fail to load but are valid
+        if (url.toLowerCase().includes(".svg")) {
+          return;
+        }
+
         checkedResources.add(url);
 
         sendEvent({
@@ -549,8 +595,8 @@ export async function GET(request: NextRequest) {
           message: `🚫 Request failed: ${url} | Reason: ${errorText} | Page: ${currentPageUrl}`,
         });
 
-        // Add to broken resources based on type
-        if (resourceType === "image") {
+        // Add to broken resources based on type - but only for confirmed errors
+        if (resourceType === "image" && errorText.includes("ERR_NAME_NOT_RESOLVED")) {
           brokenImagesCount++;
           const brokenImage: BrokenImage = {
             src: url,
@@ -562,7 +608,7 @@ export async function GET(request: NextRequest) {
           };
           sendEvent({
             type: "broken_image",
-            message: `🖼️❌ Broken image: ${url.slice(0, 80)}...`,
+            message: `🖼️❌ Broken image: ${url}`,
             data: brokenImage,
           });
         }
@@ -578,9 +624,23 @@ export async function GET(request: NextRequest) {
             return;
           }
           
+          // Send to activity log
           sendEvent({
             type: "log",
             message: `❌ Console error: ${text} | Page: ${currentPageUrl}`,
+          });
+          
+          // Also send as console_error event for dedicated panel
+          const consoleError: ConsoleError = {
+            message: text,
+            foundOnPage: currentPageUrl,
+            type: "error",
+            timestamp: new Date().toISOString(),
+          };
+          sendEvent({
+            type: "console_error",
+            message: `❌ Console error: ${text}`,
+            data: consoleError,
           });
 
           // Try to parse 404 from console error
@@ -591,11 +651,17 @@ export async function GET(request: NextRequest) {
               return;
             }
             
+            // Skip SVG images - they can report false errors
+            if (parsed.url.toLowerCase().includes(".svg")) {
+              return;
+            }
+            
             checkedResources.add(parsed.url);
             
             const type = getResourceType(parsed.url);
             
-            if (type === "image") {
+            // Only report images with genuine 404 errors (not other status codes)
+            if (type === "image" && parsed.status === 404) {
               brokenImagesCount++;
               const brokenImage: BrokenImage = {
                 src: parsed.url,
@@ -655,6 +721,19 @@ export async function GET(request: NextRequest) {
         sendEvent({
           type: "log",
           message: `🔥 JS error: ${err.message} | Page: ${currentPageUrl}`,
+        });
+        
+        // Also send as console_error event for dedicated panel
+        const consoleError: ConsoleError = {
+          message: err.message,
+          foundOnPage: currentPageUrl,
+          type: "js_error",
+          timestamp: new Date().toISOString(),
+        };
+        sendEvent({
+          type: "console_error",
+          message: `🔥 JS error: ${err.message}`,
+          data: consoleError,
         });
       });
 
@@ -716,9 +795,12 @@ export async function GET(request: NextRequest) {
 
           try {
             const response = await page.goto(url, {
-              waitUntil: "networkidle",
+              waitUntil: "domcontentloaded", // Faster than networkidle, avoids timeout on slow resources
               timeout: 30000,
             });
+            
+            // Wait a bit for dynamic content, but don't block on slow resources
+            await page.waitForTimeout(2000);
 
             // Check if the page itself is a 404
             if (response && response.status() >= 400) {
@@ -777,7 +859,9 @@ export async function GET(request: NextRequest) {
 
             // Extract and check all links on the page
             const links = await extractLinksWithContext(page);
-            const internalLinks = links.filter((l) => l.href.startsWith(origin));
+            const internalLinks = links
+              .filter((l) => l.href.startsWith(origin))
+              .filter((l) => !isHashOnlyOrAnchor(l.href)); // Skip hash-only anchors
 
             sendEvent({
               type: "log",
@@ -786,16 +870,19 @@ export async function GET(request: NextRequest) {
 
             // Register and queue internal links
             for (const link of internalLinks) {
+              // Clean URL by removing hash fragments
+              const cleanedUrl = cleanUrl(link.href);
+              
               // Register where this link was found
-              registerLink(link.href, {
+              registerLink(cleanedUrl, {
                 foundOnPage: url,
                 linkText: link.text,
                 elementContext: link.context,
               });
               
-              // Add to queue if not visited
-              if (!visited.has(link.href) && !queue.includes(link.href)) {
-                queue.push(link.href);
+              // Add to queue if not visited (use cleaned URL)
+              if (!visited.has(cleanedUrl) && !queue.includes(cleanedUrl)) {
+                queue.push(cleanedUrl);
               }
             }
 
@@ -807,18 +894,46 @@ export async function GET(request: NextRequest) {
             });
 
             for (const img of images) {
+              // Skip invalid/empty image sources
               if (!img.src || checkedResources.has(img.src)) continue;
+              
+              // Skip non-URL sources (anchors, data URIs, blob URIs)
+              if (img.src === "#" || 
+                  img.src.endsWith("#") || 
+                  img.src.startsWith("data:") || 
+                  img.src.startsWith("blob:") ||
+                  img.src === url ||  // Skip self-referencing URLs
+                  !img.src.startsWith("http")) {
+                continue;
+              }
               
               // Check if image failed to load based on DOM properties
               let isBroken = false;
               let reason = "";
 
+              // Skip SVG images from naturalWidth check - they often report 0 even when valid
+              const isSvg = img.src.toLowerCase().includes(".svg");
+              
               if (!img.complete) {
                 isBroken = true;
                 reason = "Image failed to load (incomplete)";
-              } else if (img.naturalWidth === 0) {
+              } else if (img.naturalWidth === 0 && !isSvg) {
+                // Only flag non-SVG images with zero width
                 isBroken = true;
                 reason = "Image has zero width (failed to load)";
+              }
+
+              // For potentially broken images, verify with a HEAD request
+              if (isBroken && img.src.startsWith(origin)) {
+                try {
+                  const headResult = await checkUrlStatus(img.src);
+                  if (headResult.ok || (headResult.status >= 200 && headResult.status < 400)) {
+                    // Image actually exists - skip it
+                    isBroken = false;
+                  }
+                } catch {
+                  // HEAD request failed, image is likely broken
+                }
               }
 
               if (isBroken) {
@@ -835,7 +950,7 @@ export async function GET(request: NextRequest) {
 
                 sendEvent({
                   type: "broken_image",
-                  message: `🖼️❌ Broken image: ${img.src.slice(0, 80)}...`,
+                  message: `🖼️❌ Broken image: ${img.src}`,
                   data: brokenImage,
                 });
               }
